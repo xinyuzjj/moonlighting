@@ -4,6 +4,8 @@
 driven by element references instead of coordinates — with credentials that never reach
 the model.
 
+**English** · [中文](README.zh-CN.md)
+
 ```
 ┌─ your desktop ─────────────────────────────┐
 │  Hermes / Claude / Codex / any MCP client   │
@@ -149,7 +151,27 @@ Windows only, by design: private desktops (`CreateDesktopW`), DPAPI, and silent 
 launch are Win32 primitives. The browser-control layer itself is portable — porting means
 replacing `private_desktop.py` and the DPAPI calls.
 
+## Acknowledgements
+
+Standing on these projects:
+
+| Project | How it is used |
+|---|---|
+| [microsoft/playwright-mcp](https://github.com/microsoft/playwright-mcp) | The accessibility-snapshot engine. `mcp_server.py` proxies `browser_*` tools to it; its `[ref=...]` model is what makes coordinate-free clicking possible. (Apache-2.0) |
+| [microsoft/playwright](https://github.com/microsoft/playwright) | The browser driver underneath playwright-mcp. (Apache-2.0) |
+| [python-websockets/websockets](https://github.com/python-websockets/websockets) | CDP transport for the driver, the stream and the broker. |
+| [python-pillow/Pillow](https://github.com/python-pillow/Pillow) | JPEG handling for the live preview and the drawn cursor. |
+
+Design ideas borrowed, no code vendored:
+
+- [browserbase/stagehand](https://github.com/browserbase/stagehand) — `observe()` returning real
+  selectors instead of pixels; that is why this project resolves elements by selector or ref
+  and never by coordinates.
+- [browser-use/browser-use](https://github.com/browser-use/browser-use) — the agent loop shape:
+  snapshot, act, verify.
+- [web-infra-dev/midscene](https://github.com/web-infra-dev/midscene) — the vision-based fallback
+  idea for canvas-only UIs (deliberately not enabled by default; it is slower).
+
 ## License
 
-MIT. This project delegates browsing to [@playwright/mcp](https://github.com/microsoft/playwright-mcp)
-(Apache-2.0) and Playwright (Apache-2.0); those licenses apply to those components.
+MIT. The Apache-2.0 licenses of playwright-mcp and Playwright apply to those components.
