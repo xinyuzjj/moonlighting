@@ -133,7 +133,7 @@ python setup.py --show        # 看当前配置
 - 端口记录 → `<home>/ports.json`
 
 优先级：`HERMES_*` 环境变量 > `settings.json` 的 `home` > 旧路径兼容 > 默认值。
-**旧路径兼容**：只有用户没选过位置时，才回落到 `D:\Hermes浏览器` / `E:\hermes_app\vault\broker.json`（这样老机器升级不会丢钱包）。用户一旦在 setup 里选了新目录，就以新目录为准。
+**旧路径兼容**：只有用户没选过位置时，才回落到 `<legacy-profiles>` / `<legacy-home>\vault\broker.json`（这样老机器升级不会丢钱包）。用户一旦在 setup 里选了新目录，就以新目录为准。
 
 ## 可移植：没有固定盘符、没有固定端口
 
@@ -256,7 +256,7 @@ python svc.py --stop     # 停三个
 ### 写这些脚本时的坑：路径里的反斜杠会被吃掉
 
 用 bash heredoc（`python - <<'EOF'`）批量写含 Windows 路径的文件时，Python 会把 `\v` `\b` `\H` 当转义序列：
-`E:\hermes_app\vault\broker.json` 会变成垂直制表符 + 退格 + 字母 H，写进文件后表现为“某行莫名少字、
+`<legacy-home>\vault\broker.json` 会变成垂直制表符 + 退格 + 字母 H，写进文件后表现为“某行莫名少字、
 `grep` 搜不到、`os.path.exists` 永远 False”（`vault_path()` 明明存在却判不存在就是这个原因）。
 
 规则：
@@ -338,14 +338,14 @@ profile 目录、cookie 文件、真实 profile 副本、密码库各自存在�
 直接用 `chrome.exe <url>` 会命中已在运行的 Chrome 单例，把 URL 丢进**用户自己**的窗口；就算没命中，也默认用用户 profile，cookie / 登录态全串。固定写法：
 
 ```
-chrome.exe --user-data-dir="D:\Hermes浏览器\<桌面名>" --new-window \
+chrome.exe --user-data-dir="<legacy-profiles>\<桌面名>" --new-window \
            --no-first-run --no-default-browser-check --disable-gpu \
            --remote-debugging-port=<空闲端口> \
            --window-size=1280,860 --window-position=0,0 "<url>"
 ```
 
 `--user-data-dir` 放 scratch 里登录态会跟着被清。**本机固定约定**：所有私有桌面浏览器的数据都在
-`D:\Hermes浏览器\<桌面名>\`，一个桌面一个目录，永不共享 profile。scratch 只放脚本。
+`<legacy-profiles>\<桌面名>\`，一个桌面一个目录，永不共享 profile。scratch 只放脚本。
 
 ### 只杀自己那个窗口的进程
 
@@ -359,7 +359,7 @@ chrome.exe --user-data-dir="D:\Hermes浏览器\<桌面名>" --new-window \
 
 | 维度 | 规则 |
 |---|---|
-| profile | `D:\Hermes浏览器\<桌面名>\` |
+| profile | `<legacy-profiles>\<桌面名>\` |
 | 进程 | 每桌面独立 Chrome 进程树 |
 | CDP 端口 | 每桌面一个：`--remote-debugging-port=<端口>` |
 | 推流端口 | 每桌面一个：`desk_stream.py --port <端口> --desktop <桌面名>` |
@@ -378,7 +378,7 @@ chrome.exe --user-data-dir="D:\Hermes浏览器\<桌面名>" --new-window \
 
 验收脚本思路：CDP 写 `localStorage` + `document.cookie` 标记 → 优雅关 → 重开 → 读回一致 → PASS。标记能跨多轮重启活下来才算数。
 
-批量恢复：`scripts/desk_restore.py` 枚举 `D:\Hermes浏览器\*` 下的 profile，按 `desktops.json` 里的 cdp/stream 端口逐个 `--restore`，一条命令重建所有桌面。
+批量恢复：`scripts/desk_restore.py` 枚举 `<legacy-profiles>\*` 下的 profile，按 `desktops.json` 里的 cdp/stream 端口逐个 `--restore`，一条命令重建所有桌面。
 
 ### 用 CDP 驱动私有桌面上的浏览器
 
