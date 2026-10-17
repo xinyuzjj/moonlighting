@@ -243,3 +243,8 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         pass
+
+
+def cli():
+    """pip 安装后的命令行入口。"""
+    raise SystemExit(main())

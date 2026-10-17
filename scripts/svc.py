@@ -146,3 +146,8 @@ def _pid_on(port):
 
 if __name__ == "__main__":
     main()
+
+
+def cli():
+    """pip 安装后的命令行入口。"""
+    raise SystemExit(main())

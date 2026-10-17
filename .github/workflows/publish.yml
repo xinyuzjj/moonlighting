@@ -1,0 +1,39 @@
+name: publish
+
+# Publishes to PyPI when you push a tag like v0.1.0.
+#
+# One-time setup (no API token needed — OIDC trusted publishing):
+#   1. https://pypi.org/manage/account/publishing/ → Add a pending publisher
+#        Project: moonlighting
+#        Owner:   xinyuzjj
+#        Repo:    moonlighting
+#        Workflow: publish.yml
+#        Environment: pypi
+#   2. Create a GitHub Environment named "pypi" (Settings → Environments).
+#   3. git tag v0.1.0 && git push --tags
+#
+# Afterwards every new tag ships a release.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write      # required for trusted publishing
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build sdist + wheel
+        run: |
+          python -m pip install --upgrade build
+          python -m build
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

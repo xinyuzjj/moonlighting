@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "moonlighting"
+version = "0.1.0"
+description = "Invisible hands for your AI agent: a real Chrome on a hidden desktop, ref-based control, credentials that never reach the model."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "junjunni" }]
+keywords = ["mcp", "browser-automation", "ai-agents", "playwright", "credentials", "windows"]
+dependencies = ["websockets>=12", "pillow>=10"]
+classifiers = [
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Internet :: WWW/HTTP :: Browsers",
+]
+
+[project.urls]
+Homepage = "https://github.com/xinyuzjj/moonlighting"
+Issues = "https://github.com/xinyuzjj/moonlighting/issues"
+
+[project.scripts]
+moonlighting = "svc:cli"
+moonlighting-mcp = "mcp_server:cli"
+moonlighting-setup = "setup:cli"
+moonlighting-session = "session:cli"
+
+[tool.setuptools]
+package-dir = { "" = "scripts" }
+py-modules = [
+    "auth",
+    "browser_daemon",
+    "cdp_click",
+    "cred_dialog",
+    "desk_browser",
+    "desk_chrome",
+    "desk_restore",
+    "desk_stream",
+    "ext_click",
+    "login_flow",
+    "mcp_server",
+    "ports",
+    "private_desktop",
+    "qclick",
+    "session",
+    "setup",
+    "svc",
+    "vault_broker",
+    "wclick",
+]
+
+[tool.setuptools.data-files]
+"share/moonlighting" = ["scripts/cred_form.html"]
+"share/moonlighting/templates" = [
+    "scripts/templates/desk_ctl.html",
+    "scripts/templates/desk_view.html",
+]

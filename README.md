@@ -37,6 +37,26 @@ Driving a browser as an agent usually goes wrong in three places:
 
 Requires Windows 10/11, Python 3.10+, Node 18+ (for the Playwright MCP child), Chrome.
 
+### Option A — pip (no paths to edit)
+
+```bash
+pip install moonlighting
+moonlighting-setup --options          # where should browser data live?
+moonlighting-setup --home "D:\moonlighting"
+moonlighting                          # starts stream + broker + driver
+```
+
+Then wire it into your MCP client with **no absolute paths at all**:
+
+```json
+{ "mcpServers": { "browser": { "command": "moonlighting-mcp" } } }
+```
+
+`moonlighting-mcp`, `moonlighting-setup`, `moonlighting-session` and `moonlighting`
+are console scripts installed by the package.
+
+### Option B — clone
+
 ```bash
 git clone https://github.com/xinyuzjj/moonlighting.git
 cd moonlighting
@@ -47,8 +67,18 @@ python scripts/setup.py --home "D:\moonlighting"
 python scripts/svc.py                      # starts stream + broker + driver
 ```
 
-`svc.py` prints a preview URL. Open it in the Hermes preview pane (or any browser) to watch
-and even click into the hidden desktop:
+Either way, `install_mcp.py` writes the right config for you — it detects whether
+`moonlighting-mcp` is installed and falls back to absolute script paths if not:
+
+```bash
+python scripts/install_mcp.py                 # print configs with real paths
+python scripts/install_mcp.py --write claude  # write it (backs up the original)
+python scripts/install_mcp.py --write codex
+python scripts/install_mcp.py --write all
+```
+
+`svc.py` / `moonlighting` prints a preview URL. Open it in the Hermes preview pane (or any
+browser) to watch and even click into the hidden desktop:
 
 ```
 preview: http://127.0.0.1:8765/ctl
@@ -63,7 +93,19 @@ First run creates `<home>/token.txt` — every state-changing endpoint requires 
 `scripts/mcp_server.py` is a standard MCP stdio server exposing **27 tools**
 (25 `browser_*` plus `cred_list` / `cred_fill`).
 
-Claude Desktop / Claude Code (`mcpServers`):
+If you installed with pip, the whole config is one line — no paths:
+
+```json
+{ "mcpServers": { "browser": { "command": "moonlighting-mcp" } } }
+```
+
+Cloned instead? Let `install_mcp.py` fill in the real paths:
+
+```bash
+python scripts/install_mcp.py --write all
+```
+
+Or write it by hand (Claude Desktop / Claude Code, `mcpServers`):
 
 ```json
 {

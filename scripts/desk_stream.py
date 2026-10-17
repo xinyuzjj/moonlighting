@@ -19,6 +19,7 @@ import io
 import json
 import threading
 import time
+import sys
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -524,7 +525,16 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path.startswith("/ctl") or self.path.startswith("/view"):
             # 页面由服务自己吐出，端口从请求里来——模板里不再写死 8765
             name = "desk_ctl.html" if self.path.startswith("/ctl") else "desk_view.html"
-            path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "templates", name)
+            # 模板可能在这几个位置：环境变量、同目录 templates、上一级 templates、
+            # 或 pip 安装后的 share/moonlighting/templates
+            cands = [
+                os.environ.get("MOONLIGHTING_TEMPLATES", ""),
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates"),
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "templates"),
+                os.path.join(sys.prefix, "share", "moonlighting", "templates"),
+            ]
+            path = next((os.path.join(c, name) for c in cands
+                         if c and os.path.exists(os.path.join(c, name))), "")
             try:
                 with open(path, encoding="utf-8") as f:
                     html = f.read()

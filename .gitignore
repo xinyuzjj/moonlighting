@@ -22,3 +22,8 @@ browser-data/
 .idea/
 .DS_Store
 Thumbs.db
+
+# packaging
+dist/
+build/
+*.egg-info/

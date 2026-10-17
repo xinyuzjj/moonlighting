@@ -147,3 +147,8 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+def cli():
+    """pip 安装后的命令行入口。"""
+    raise SystemExit(main())

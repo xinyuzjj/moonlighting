@@ -36,6 +36,26 @@
 
 需要 Windows 10/11、Python 3.10+、Node 18+（Playwright MCP 子进程要用）、Chrome。
 
+### 方式 A —— pip 安装（不用改任何路径）
+
+```bash
+pip install moonlighting
+moonlighting-setup --options          # 先问浏览器数据装哪里
+moonlighting-setup --home "D:\moonlighting"
+moonlighting                          # 启动推流 / 凭据代理 / 浏览器驱动
+```
+
+接进 MCP 客户端只要一行，**没有任何绝对路径**：
+
+```json
+{ "mcpServers": { "browser": { "command": "moonlighting-mcp" } } }
+```
+
+`moonlighting-mcp`、`moonlighting-setup`、`moonlighting-session`、`moonlighting`
+都是装包时自动生成的命令行入口。
+
+### 方式 B —— clone 源码
+
 ```bash
 git clone https://github.com/xinyuzjj/moonlighting.git
 cd moonlighting
@@ -43,11 +63,21 @@ pip install -r requirements.txt
 
 python scripts/setup.py --options          # 先问浏览器数据装哪里
 python scripts/setup.py --home "D:\moonlighting"
-python scripts/svc.py                      # 启动推流 / 凭据代理 / 浏览器驱动
+python scripts/svc.py                      # 启动三个服务
 ```
 
-`svc.py` 会打印预览地址。把它放进 Hermes 的预览面板（或任意浏览器），就能看画面、
-甚至直接在画面上点击：
+不管哪种方式，`install_mcp.py` 都会帮你把配置写对——它检测到 `moonlighting-mcp`
+就用零路径写法，没装就回落到脚本的绝对路径：
+
+```bash
+python scripts/install_mcp.py                 # 打印带真实路径的配置
+python scripts/install_mcp.py --write claude  # 直接写入（自动备份原文件）
+python scripts/install_mcp.py --write codex
+python scripts/install_mcp.py --write all
+```
+
+`svc.py` / `moonlighting` 会打印预览地址。把它放进 Hermes 的预览面板（或任意浏览器），
+就能看画面、甚至直接在画面上点击：
 
 ```
 preview: http://127.0.0.1:8765/ctl
@@ -62,7 +92,19 @@ preview: http://127.0.0.1:8765/ctl
 `scripts/mcp_server.py` 是一个标准 MCP stdio server，暴露 **27 个工具**
 （25 个 `browser_*` + `cred_list` / `cred_fill`）。
 
-Claude Desktop / Claude Code（`mcpServers`）：
+pip 装过的话，配置就一行，**没有任何路径**：
+
+```json
+{ "mcpServers": { "browser": { "command": "moonlighting-mcp" } } }
+```
+
+是 clone 的？让 `install_mcp.py` 把真实路径填好：
+
+```bash
+python scripts/install_mcp.py --write all
+```
+
+或者手写（Claude Desktop / Claude Code，`mcpServers`）：
 
 ```json
 {

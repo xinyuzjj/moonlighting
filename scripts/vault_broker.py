@@ -18,6 +18,7 @@ import ctypes.wintypes as w
 import json
 import os
 import re
+import sys
 import threading
 import time
 import urllib.parse
@@ -533,9 +534,13 @@ class Handler(BaseHTTPRequestHandler):
                           for k, v in data.items()]}, ensure_ascii=False))
         if u.path == "/form":
             # 必须用 http 提供：file:// 页面无法 fetch http://127.0.0.1（Chrome 直接拦）
+            here = os.path.dirname(os.path.abspath(__file__))
+            cands = [os.environ.get("MOONLIGHTING_TEMPLATES", ""), here,
+                     os.path.join(sys.prefix, "share", "moonlighting")]
+            fpath = next((os.path.join(c, "cred_form.html") for c in cands
+                          if c and os.path.exists(os.path.join(c, "cred_form.html"))), "")
             try:
-                with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                       "cred_form.html"), encoding="utf-8") as fh:
+                with open(fpath, encoding="utf-8") as fh:
                     html = fh.read()
             except OSError as e:
                 return self._send(500, f"form 缺失: {e}", "text/plain; charset=utf-8")
