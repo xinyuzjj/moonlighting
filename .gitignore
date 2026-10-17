@@ -1,0 +1,24 @@
+# runtime artifacts — never commit
+__pycache__/
+*.pyc
+*.pyo
+_cmd_*.txt
+_hidden.vbs
+ports.json
+settings.json
+token.txt
+audit.jsonl
+*.log
+
+# local data (browser profiles, credentials) live outside the repo by default,
+# but ignore them here too in case someone points the home at the checkout
+profiles/
+vault/
+sessions/
+browser-data/
+
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

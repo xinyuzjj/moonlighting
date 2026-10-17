@@ -1,0 +1,77 @@
+<!doctype html>
+<!--
+  查看器：配合 scripts/desk_stream.py 使用。
+  关键：用 canvas + 轮询 /snapshot，不要用 <img src=".../stream.mjpg">。
+  MJPEG 走 <img> 没有缓冲，长连接一断就回落到背景色 = 一闪一闪的黑屏。
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  /* 聊天内嵌组件约定：只用主题变量，不设自己的背景/字体/外边距 */
+  body { margin:0; font-family: var(--app-font, system-ui); color: var(--foreground); }
+  .bar { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted-foreground); padding:6px 0; }
+  .dot { width:8px; height:8px; border-radius:50%; background:#22c55e; box-shadow:0 0 6px #22c55e; }
+  .dot.stale { background:#f59e0b; box-shadow:0 0 6px #f59e0b; }
+  .dot.dead { background:#ef4444; box-shadow:0 0 6px #ef4444; }
+  .frame { border:1px solid var(--border); border-radius:10px; overflow:hidden; width:100%;
+           min-height:60px; display:flex; align-items:center; justify-content:center; }
+  canvas { display:block; width:100%; height:auto; }
+  .hint { font-size:12px; color:var(--muted-foreground); padding:20px; }
+  code { color:var(--foreground); }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <span class="dot" id="dot"></span>
+    <span>HermesDesk · 私有桌面</span>
+    <code id="stat">连接中…</code>
+  </div>
+  <div class="frame" id="frame">
+    <canvas id="cv"></canvas>
+    <div class="hint" id="hint">等待第一帧…</div>
+  </div>
+  <div class="bar">这个窗口不在你的桌面上。</div>
+
+<script>
+(function () {
+  var SNAP = "http://127.0.0.1:8765/snapshot";
+  var cv = document.getElementById("cv");
+  var ctx = cv.getContext("2d");
+  var hint = document.getElementById("hint");
+  var stat = document.getElementById("stat");
+  var dot = document.getElementById("dot");
+  var seq = 0, fails = 0, busy = false;
+
+  // 帧完整解码后才一次性 drawImage，中间不存在空白间隔 -> 不可能闪黑
+  function tick() {
+    if (busy) { setTimeout(tick, 120); return; }
+    busy = true;
+    var probe = new Image();
+    probe.onload = function () {
+      fails = 0;
+      dot.className = "dot";
+      if (cv.width !== probe.naturalWidth || cv.height !== probe.naturalHeight) {
+        cv.width = probe.naturalWidth;
+        cv.height = probe.naturalHeight;
+      }
+      ctx.drawImage(probe, 0, 0);
+      if (hint.parentNode) hint.remove();
+      stat.textContent = "第 " + (++seq) + " 帧 · " + new Date().toLocaleTimeString();
+      busy = false;
+      setTimeout(tick, 320);
+    };
+    probe.onerror = function () {
+      fails++;
+      dot.className = fails > 3 ? "dot dead" : "dot stale";
+      stat.textContent = fails > 3 ? "推流服务没响应（" + fails + " 次）" : "丢帧，重试中";
+      busy = false;
+      setTimeout(tick, 600);
+    };
+    probe.src = SNAP + "?t=" + Date.now();  // 时间戳必须带，否则浏览器给缓存图
+  }
+  tick();
+})();
+</script>
+</body>
+</html>

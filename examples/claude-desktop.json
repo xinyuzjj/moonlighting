@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "browser": {
+      "command": "python",
+      "args": [
+        "C:\path\to\moonlighting\scripts\mcp_server.py",
+        "--cdp-endpoint", "http://127.0.0.1:18763"
+      ]
+    }
+  }
+}

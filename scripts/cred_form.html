@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>凭据代理 · 按页面字段填写</title>
+<style>
+  body { margin:0; font-family: var(--app-font, system-ui); color: var(--foreground); }
+  .card { border:1px solid var(--border); border-radius:12px; padding:14px 16px; width:420px; }
+  .hd { font-size:13px; font-weight:600; margin-bottom:2px; }
+  .sub { font-size:11px; color:var(--muted-foreground); margin-bottom:12px; line-height:1.5; }
+  label { display:block; font-size:11px; color:var(--muted-foreground); margin:10px 0 4px; }
+  input { width:100%; box-sizing:border-box; padding:9px 10px; font-size:13px;
+          border:1px solid var(--border); border-radius:8px; background:transparent; color:var(--foreground); }
+  button { margin-top:14px; width:100%; padding:10px; font-size:13px; border:0; border-radius:8px;
+           background:var(--foreground); color:var(--card, #fff); cursor:pointer; }
+  button:disabled { opacity:.5; cursor:default; }
+  .out { margin-top:10px; font-size:11px; line-height:1.5; }
+  .ok { color:#16a34a; }
+  .err { color:#dc2626; }
+  .meta { font-size:10px; color:var(--muted-foreground); margin-top:8px; word-break:break-all; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="hd">凭据代理 · 按页面字段填写</div>
+  <div class="sub" id="sub">正在读取目标页面的输入框…</div>
+  <div id="fields"></div>
+  <button id="save" disabled>加密保存</button>
+  <div class="out" id="out"></div>
+  <div class="meta" id="meta"></div>
+</div>
+<script>
+const BROKER = "http://127.0.0.1:8899";
+const CDP = 18763;                      // 目标 Chrome 的调试端口
+const fieldsBox = document.getElementById("fields");
+const btn = document.getElementById("save");
+const out = document.getElementById("out");
+const sub = document.getElementById("sub");
+const meta = document.getElementById("meta");
+let origin = "";
+
+function fieldName(f, i, total) {
+  const l = (f.label || "").trim();
+  if (l && l.length <= 24) return l;
+  if (f.type === "password") return total > 1 ? (i === 0 ? "密码" : (i === 1 ? "确认密码" : "密码 " + (i + 1))) : "密码";
+  return "输入框 " + (i + 1);
+}
+
+async function describe() {
+  try {
+    const r = await fetch(BROKER + "/describe?cdp=" + CDP);
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || "读取失败");
+    origin = j.origin || "";
+    const fs = (j.fields || []);
+    if (!fs.length) throw new Error("目标页面上没有可填的输入框");
+    fieldsBox.innerHTML = "";
+    fs.forEach((f, i) => {
+      const lb = document.createElement("label");
+      lb.textContent = fieldName(f, i, fs.length);
+      const inp = document.createElement("input");
+      inp.type = "password";
+      inp.dataset.idx = i;
+      inp.autocomplete = "new-password";
+      fieldsBox.appendChild(lb);
+      fieldsBox.appendChild(inp);
+    });
+    sub.textContent = "目标页面 · " + (j.title || origin);
+    meta.textContent = origin;
+    btn.disabled = false;
+  } catch (e) {
+    sub.textContent = "读不到目标页面";
+    out.className = "err";
+    out.textContent = String(e.message || e);
+  }
+}
+describe();
+
+btn.onclick = async () => {
+  const ins = [...fieldsBox.querySelectorAll("input")];
+  const vals = ins.map(i => i.value);
+  ins.forEach(i => { i.value = ""; });          // 先清屏，值只在内存里
+  if (vals.some(v => v.length < 4)) {
+    out.className = "err"; out.textContent = "每栏至少 4 个字符。";
+    btn.disabled = false; return;
+  }
+  if (vals.length > 1 && new Set(vals).size !== 1) {
+    out.className = "err"; out.textContent = "两次输入不一致，重来。";
+    btn.disabled = false; return;
+  }
+  btn.disabled = true;
+  try {
+    const r = await fetch(BROKER + "/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ origin: origin, label: "页面凭据", secret: vals[0] })
+    });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || "保存失败");
+    out.className = "ok";
+    out.textContent = "已加密保存。handle = " + j.handle;
+    if (window.hermes && window.hermes.send) {
+      window.hermes.send("凭据已保存，handle=" + j.handle + "，请调用 /inject 注入到页面");
+    }
+  } catch (e) {
+    out.className = "err";
+    out.textContent = String(e.message || e);
+    btn.disabled = false;
+  }
+};
+</script>
+</body>
+</html>
