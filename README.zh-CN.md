@@ -5,6 +5,10 @@
 
 [English](README.md) · **中文**
 
+[![PyPI](https://img.shields.io/pypi/v/moonlighting.svg)](https://pypi.org/project/moonlighting/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](#平台)
+
 ```
 ┌─ 你的桌面 ─────────────────────────────────┐
 │  Hermes / Claude / Codex / 任何 MCP 客户端  │

@@ -6,6 +6,10 @@ the model.
 
 **English** · [中文](README.zh-CN.md)
 
+[![PyPI](https://img.shields.io/pypi/v/moonlighting.svg)](https://pypi.org/project/moonlighting/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](#platform)
+
 ```
 ┌─ your desktop ─────────────────────────────┐
 │  Hermes / Claude / Codex / any MCP client   │
