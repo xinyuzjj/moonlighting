@@ -219,9 +219,17 @@ class H(BaseHTTPRequestHandler):
             return self._out(f"异常: {e}", 500)
 
 
+def _port(v):
+    """接受 18763 或 http://127.0.0.1:18763 两种写法。"""
+    s = str(v).rstrip("/")
+    return int(s.rsplit(":", 1)[-1].rsplit("/", 1)[-1])
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cdp", type=int, default=int(os.environ.get("HERMES_CDP_PORT", "18763")))
+    # --cdp-endpoint 是 mcp_server 的参数名，这里一并接受，省得两处命令行记混
+    ap.add_argument("--cdp", "--cdp-endpoint", dest="cdp", type=_port,
+                    default=int(os.environ.get("HERMES_CDP_PORT", "18763")))
     ap.add_argument("--port", type=int, default=int(os.environ.get("HERMES_DRIVER_PORT", "8897")))
     ap.add_argument("--snapshot-boxes", action="store_true", help="快照里带坐标框")
     a = ap.parse_args()

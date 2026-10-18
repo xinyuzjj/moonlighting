@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "moonlighting"
-version = "0.1.3"
+version = "0.1.4"
 description = "Invisible hands for your AI agent: a real Chrome on a hidden desktop, ref-based control, credentials that never reach the model."
 readme = "README.md"
 requires-python = ">=3.10"

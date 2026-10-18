@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4 — 2026-10-18
+
+- `browser_daemon --cdp-endpoint http://127.0.0.1:18763` now works. `mcp_server.py` takes
+  `--cdp-endpoint` while the daemon took `--cdp`, so the obvious copy-paste failed with
+  `unrecognized arguments`. Both spellings (and a bare port) are accepted.
+
 ## 0.1.3 — 2026-10-18
 
 - **Works without Chrome.** The launcher hard-coded three Chrome paths and then fell back to
