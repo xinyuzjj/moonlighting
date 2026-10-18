@@ -129,6 +129,25 @@ export HERMES_STREAM_PORT=8766 HERMES_BROKER_PORT=8900 HERMES_DRIVER_PORT=8898
 - **选过 home 就不回退旧路径。** `profiles/`、`vault/` 都在它下面解析。
 - **凭据库跟着 home 走。** A 桌面的 handle 在 B 桌面的 broker 上会返回 not found，跨实例填不进去。
 
+## 账号台账
+
+一个桌面 = 一个平台 = 一个号。台账把这件事记下来，省得号多了靠人脑记：
+
+```bash
+python scripts/accounts.py add --desktop junjunni --platform github        --account me@example.com --cdp 18764 --actions read,post
+python scripts/accounts.py list
+python scripts/accounts.py remove --desktop junjunni
+```
+
+```
+桌面            平台        账号                  权限      状态      新增
+junjunni        github      me@example.com        read,post unknown   2026-10-18 11:15
+```
+
+**台账只存元数据，不存密码**——密码在各桌面自己的 vault 里。状态列现在是 `unknown`，
+等登录态体检做出来才会填 `ok` / `expired`。文件默认在
+`%LOCALAPPDATA%\moonlightingccounts.json`（`MOONLIGHTING_ACCOUNTS` 可覆盖）。
+
 ## Agent 闭环（实验，`agent/`）
 
 `scripts/` 是手，`agent/` 是套在手上的闭环——**不在 wheel 里**，从 clone 里跑。

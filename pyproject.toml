@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "moonlighting"
-version = "0.1.4"
+version = "0.1.5"
 description = "Invisible hands for your AI agent: a real Chrome on a hidden desktop, ref-based control, credentials that never reach the model."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -29,10 +29,12 @@ moonlighting = "svc:cli"
 moonlighting-mcp = "mcp_server:cli"
 moonlighting-setup = "setup:cli"
 moonlighting-session = "session:cli"
+moonlighting-accounts = "accounts:cli"
 
 [tool.setuptools]
 package-dir = { "" = "scripts" }
 py-modules = [
+    "accounts",
     "auth",
     "browser_daemon",
     "cdp_click",

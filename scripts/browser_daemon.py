@@ -208,8 +208,12 @@ class H(BaseHTTPRequestHandler):
             elif u.path == "/back":
                 text = tool("browser_navigate_back", {})
             elif u.path == "/tabs":
-                text = tool("browser_snapshot", {})
-                text = text.split("### Page")[0]
+                text = tool("browser_tabs", {"action": "list"})
+            elif u.path == "/tab":
+                # 切标签：多开页面时，读验证码和填表单就在同一个浏览器里来回切
+                text = tool("browser_tabs", {"action": "select", "index": int(q.get("i", "0"))})
+            elif u.path == "/newtab":
+                text = tool("browser_tabs", {"action": "new", "url": q.get("url", "about:blank")})
             else:
                 return self._out("未知接口", 404)
             STATE["calls"] += 1

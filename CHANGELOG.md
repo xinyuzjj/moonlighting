@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.5 — 2026-10-18
+
+- **Account ledger** (`scripts/accounts.py`, console script `moonlighting-accounts`):
+  one row per desktop = platform = account, with the permissions that desk is allowed to use.
+  Metadata only — passwords stay in each desk's own vault. Ships with `--selftest`.
+- `browser_daemon` gained real tab endpoints: `/tabs`, `/tab?i=N`, `/newtab?url=`.
+  `/tabs` previously returned an empty snapshot instead of the tab list.
+- `svc.py` opens the preview window on start (`--no-open` to suppress).
+
 ## 0.1.4 — 2026-10-18
 
 - `browser_daemon --cdp-endpoint http://127.0.0.1:18763` now works. `mcp_server.py` takes
