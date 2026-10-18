@@ -21,6 +21,7 @@ Codex 用 TOML：
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 import threading
@@ -36,11 +37,32 @@ def log(*a):
     print("[mcp]", *a, file=LOG, flush=True)
 
 
+def _npx():
+    """找 npx。MCP 客户端常用干净 PATH 启动子进程，光靠 PATH 会找不到（实测）。"""
+    override = os.environ.get("MOONLIGHTING_NPX")
+    if override and os.path.exists(override):
+        return override
+    found = shutil.which("npx.cmd") or shutil.which("npx")
+    if found:
+        return found
+    # 常见安装位置兜底：nvm / Program Files / AppData
+    cands = [
+        os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"), "nodejs", "npx.cmd"),
+        os.path.join(os.environ.get("APPDATA", ""), "npm", "npx.cmd"),
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "nodejs", "npx.cmd"),
+    ]
+    for c in cands:
+        if c and os.path.exists(c):
+            return c
+    raise SystemExit(
+        "找不到 npx。装 Node 18+，或设 MOONLIGHTING_NPX 指向 npx.cmd 的绝对路径。")
+
+
 class Child:
     """把 @playwright/mcp 当子进程用，转发 tools/*。"""
 
     def __init__(self, cdp_endpoint, extra):
-        cmd = ["npx.cmd" if os.name == "nt" else "npx", "-y", "@playwright/mcp@latest",
+        cmd = [_npx(), "-y", "@playwright/mcp@latest",
                "--cdp-endpoint", cdp_endpoint, "--snapshot-mode", "none",
                "--timeout-settle", "250"] + extra
         self.p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,

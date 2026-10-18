@@ -82,8 +82,12 @@ def mcp(method, params, timeout=120):
                 return m
 
 
-def tool(name, args, timeout=120):
+def tool(name, args, timeout=120, _retry=True):
     r = mcp("tools/call", {"name": name, "arguments": args}, timeout)
+    # playwright-mcp 冷启动偶尔返回空内容（实测首次 /snap 拿到 0 字节），重试一次
+    if _retry and r and not (r.get("result", {}) or {}).get("content"):
+        time.sleep(0.6)
+        return tool(name, args, timeout, _retry=False)
     if not r:
         return "MCP 超时"
     if "error" in r:
@@ -149,8 +153,15 @@ class H(BaseHTTPRequestHandler):
         t0 = time.time()
         try:
             if u.path == "/status":
+                ident = {}
+                try:
+                    import ports as _p
+                    ident = {"home": _p.home(), "desk": os.environ.get("HERMES_DESK", "HermesDesk")}
+                except Exception:  # noqa: BLE001
+                    pass
                 return self._out(json.dumps({"ready": STATE["ready"], "calls": STATE["calls"],
-                                             "uptime": round(time.time() - STATE["started"], 1)}))
+                                             "uptime": round(time.time() - STATE["started"], 1),
+                                             **ident}, ensure_ascii=False))
             if u.path == "/snap":
                 text = tool("browser_snapshot", {})
             elif u.path == "/click":

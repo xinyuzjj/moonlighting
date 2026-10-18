@@ -526,7 +526,15 @@ class Handler(BaseHTTPRequestHandler):
             save_store(data)
             return self._send(200, json.dumps({"ok": True, "deleted": handle}))
         if u.path == "/health":
-            return self._send(200, json.dumps({"ok": True, "service": "vault-broker"}))
+            # 带上 home + desk：别的实例靠这两个字段判断"这是不是我自己"
+            try:
+                import ports as _p
+                ident = {"home": _p.home(), "desk": os.environ.get("HERMES_DESK", "HermesDesk")}
+            except Exception:  # noqa: BLE001
+                ident = {"home": os.path.dirname(os.path.dirname(os.path.abspath(STORE))),
+                         "desk": os.environ.get("HERMES_DESK", "HermesDesk")}
+            return self._send(200, json.dumps({"ok": True, "service": "vault-broker", **ident},
+                                              ensure_ascii=False))
         if u.path == "/list":
             data = load_store()
             return self._send(200, json.dumps({

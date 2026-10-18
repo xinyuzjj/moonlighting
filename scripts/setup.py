@@ -30,6 +30,8 @@ SETTINGS = os.environ.get("HERMES_SETTINGS") or os.path.join(PTR_DIR, "settings.
 
 
 def candidates():
+    here = os.path.dirname(os.path.abspath(__file__))
+    repo = os.path.dirname(here)          # 代码目录本身不该被推荐成数据目录
     out = []
     out.append(("localappdata", "系统用户数据目录（推荐，默认）",
                 os.path.join(os.environ.get("LOCALAPPDATA") or os.path.expanduser("~"), "hermes-browser")))
@@ -43,6 +45,9 @@ def candidates():
                 out.append((f"drive_{drive.lower()}", f"{drive} 盘根目录", p))
     res = []
     for cid, label, path in out:
+        if os.path.normcase(os.path.abspath(path)) in (
+                os.path.normcase(repo), os.path.normcase(here)):
+            continue                      # 代码放在哪，就别建议装到哪
         res.append({"id": cid, "label": label, "path": path,
                     "writable": _writable(path), "free_gb": _free_gb(path),
                     "note": "已有数据" if _has_data(path) else ""})
@@ -83,16 +88,35 @@ def load():
         return {}
 
 
-def save(home, desk=None):
+def save(home, desk=None, force=False):
+    """写指针文件。已存在且指向别处时**先备份并要求 --force**，绝不静默覆盖。
+
+    这个文件是"浏览器数据装在哪"的唯一指针：静默改掉它，用户原有的 profile 根和凭据库
+    就不再被解析，下次跑起来是空环境（真实踩过）。
+    """
     home = os.path.abspath(home)
     os.makedirs(home, exist_ok=True)
-    data = load()
+    cur = load()
+    prev = cur.get("home")
+    backup = ""
+    if prev and os.path.normcase(os.path.abspath(prev)) != os.path.normcase(home):
+        if not force:
+            raise SystemExit(
+                f"拒绝覆盖：{SETTINGS} 已指向 {prev}\n"
+                f"  要改到 {home}，加 --force（原文件会自动备份）；\n"
+                f"  想完全不动全局指针，就把 HERMES_SETTINGS 指向你自己的文件。")
+        if os.path.exists(SETTINGS):
+            backup = SETTINGS + ".bak-" + time.strftime("%Y%m%d-%H%M%S")
+            shutil.copy2(SETTINGS, backup)
+    data = dict(cur)
     data.update({"home": home, "installed_at": time.strftime("%Y-%m-%d %H:%M:%S")})
     if desk:
         data["desk"] = desk
     os.makedirs(os.path.dirname(SETTINGS), exist_ok=True)
     with open(SETTINGS, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+    if backup:
+        data["backup"] = backup
     return data
 
 
@@ -102,6 +126,7 @@ def main():
     ap.add_argument("--home", default="", help="用户选定的安装目录")
     ap.add_argument("--desk", default="", help="私有桌面名（可选）")
     ap.add_argument("--show", action="store_true", help="显示当前配置")
+    ap.add_argument("--force", action="store_true", help="指针已指向别处时仍然覆盖（自动备份）")
     a = ap.parse_args()
 
     if a.options:
@@ -116,7 +141,7 @@ def main():
         if not _writable(a.home):
             print(json.dumps({"ok": False, "error": f"目录不可写：{a.home}"}, ensure_ascii=False))
             return 2
-        data = save(a.home, a.desk or None)
+        data = save(a.home, a.desk or None, force=a.force)
         print(json.dumps({"ok": True, **data, "settings_file": SETTINGS}, ensure_ascii=False, indent=2))
         return 0
 
@@ -140,7 +165,7 @@ def main():
     if not _writable(home):
         print(f"目录不可写：{home}")
         return 2
-    data = save(home)
+    data = save(home, force=True)
     print(f"\n已安装到: {data['home']}\n配置: {SETTINGS}")
     return 0
 

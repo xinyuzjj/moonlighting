@@ -57,6 +57,22 @@ def _ensure_vbs():
     return HIDDEN_VBS
 
 
+def _env_passthrough():
+    """所有会改变隔离行为的变量，都要显式写进包装脚本。
+
+    WMI 创建进程时用的是 WmiPrvSE 自己的环境，调用者的 export 全部丢失——
+    这是"设了 home 却仍然写到默认目录"的根因，必须靠包装脚本补回来。
+    """
+    allow = {"HERMES_BROWSER_HOME", "HERMES_PROFILES", "HERMES_VAULT", "HERMES_DESK",
+             "HERMES_SETTINGS", "HERMES_STREAM_PORT", "HERMES_BROKER_PORT",
+             "HERMES_DRIVER_PORT", "HERMES_CDP_PORT"}
+    keep = {k: v for k, v in os.environ.items()
+            if k in allow or k.startswith("MOONLIGHTING_")}
+    keep.setdefault("HERMES_BROWSER_HOME", _ports.home())
+    keep.setdefault("HERMES_DESK", os.environ.get("HERMES_DESK", "HermesDesk"))
+    return keep
+
+
 def spawn_detached(name, args):
     """用 WMI 起进程：父进程是 WmiPrvSE.exe，不在 Hermes 的作业对象里。
 
@@ -67,12 +83,21 @@ def spawn_detached(name, args):
     script = os.path.join(HERE, name)
     # python.exe 是控制台程序：直接用 WMI 起它一定会闪黑框。
     # 走 wscript（GUI 子系统，本身不建控制台）→ 它用隐藏窗口启动真正的命令。
-    cmd = f'"{PY_EXE}" "{script}" ' + " ".join(args)
     if os.name == "nt":
         try:
+            # 1) 先把环境写进一个 .cmd（cmd 里 set 完再起 python，环境就跟着走了）
+            runfile = os.path.join(HERE, f"_run_{name}.cmd")
+            lines = ["@echo off"]
+            for k, v in sorted(_env_passthrough().items()):
+                lines.append(f"set {k}={v}")
+            lines.append(f'"{PY_EXE}" "{script}" ' + " ".join(args))
+            with open(runfile, "w", encoding="utf-8", newline="\r\n") as f:
+                f.write("\r\n".join(lines) + "\r\n")
+
+            # 2) wscript 读的是"命令行"文件，让它去起那个 .cmd
             cmdfile = os.path.join(HERE, f"_cmd_{name}.txt")
             with open(cmdfile, "w", encoding="utf-8") as f:
-                f.write(cmd)
+                f.write(f'cmd.exe /c ""{runfile}""')
             vbs = _ensure_vbs()
             wmi_cmd = f'wscript.exe //nologo "{vbs}" "{cmdfile}"'
             r = subprocess.run(["wmic", "process", "call", "create", wmi_cmd],
@@ -112,6 +137,7 @@ def main():
 
     started = []
     if not a.status:
+        _ensure_token()
         for name, args, port in SERVICES:
             if up(port):
                 continue
@@ -129,10 +155,26 @@ def main():
         time.sleep(6)
 
     for name, _, port in SERVICES:
-        print(f"  {name:<20} port {port:<6} {'UP' if up(port) else 'DOWN'}")
+        ok = up(port)
+        real = _pid_on(port) if ok else None
+        print(f"  {name:<20} port {port:<6} {'UP ' if ok else 'DOWN'} "
+              + (f"(pid {real})" if real else ""))
     if started:
-        print("  started:", ", ".join(f"{n}(pid {p})" for n, p in started))
+        # 报出去的必须是真正监听的进程；wscript 的 pid 用户 taskkill 了也没用
+        print("  started:", ", ".join(
+            f"{n}(wrapper pid {p})" for n, p in started),
+              "  <- 真正监听的是上面 UP 那行的 pid")
     print(f"  preview: http://127.0.0.1:{STREAM}/ctl   <- 启动后立刻在预览面板打开这个地址")
+
+
+def _ensure_token():
+    """服务启动时就把 token 落盘。之前是懒生成，用户 cat token.txt 拿到空串然后 401。"""
+    try:
+        import auth
+        t = auth.token()
+        print(f"  token: {t[:8]}…  ({auth.TOKEN_FILE if hasattr(auth, 'TOKEN_FILE') else 'home'})")
+    except Exception as e:  # noqa: BLE001
+        print(f"  token: 生成失败 {e}")
 
 
 def _pid_on(port):

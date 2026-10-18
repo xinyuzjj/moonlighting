@@ -17,6 +17,7 @@ import ctypes
 import ctypes.wintypes as w
 import io
 import json
+import re
 import threading
 import time
 import sys
@@ -426,6 +427,21 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
+        # 身份端点：别的实例靠它判断"这个端口是不是我自己"
+        if self.path.startswith("/health"):
+            try:
+                import ports as _p
+                home = _p.home()
+            except Exception:  # noqa: BLE001
+                home = os.environ.get("HERMES_BROWSER_HOME", "")
+            body = json.dumps({"ok": True, "service": "desk-stream",
+                               "home": home, "desk": DESKTOP}).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         # 注入按键/点击的接口必须带 token（同机任何进程都能调 8765）
         if self.path.startswith(("/c?", "/t?", "/k?", "/focus")):
             q = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
@@ -541,8 +557,12 @@ class Handler(BaseHTTPRequestHandler):
             except OSError:
                 self.send_error(404, "template not found")
                 return
+            # 预览面板会把页面 DOM instrument 后写回磁盘。让它写副本，别脏了仓库里的模板。
+            html = re.sub(r'\s+data-page-node-id="[^"]*"', "", html)
             host = self.headers.get("Host") or f"127.0.0.1:{self.server.server_port}"
             html = html.replace("127.0.0.1:8765", host)
+            # 桌面名与端口由服务端注入，多实例时标题栏才分得清是哪一套
+            html = html.replace("__DESK__", DESKTOP).replace("__PORT__", str(self.server.server_port))
             try:
                 html = html.replace("__TOKEN__", _auth.token())
             except Exception:  # noqa: BLE001

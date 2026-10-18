@@ -158,6 +158,38 @@ python scripts/session.py stop --name a1
 a1   cdp=18764  stream=8766  driver=8898  UP  http://127.0.0.1:8766/ctl
 ```
 
+## Running more than one instance
+
+The defaults (`HermesDesk`, ports 8765/8897/8899/18763, one global pointer file) are meant for
+a single installation. If something is already running on the machine, give the second instance
+its own identity — all of it is environment variables:
+
+```bash
+export HERMES_BROWSER_HOME="D:\mb-agent"          # browser data (profiles, vault, token)
+export HERMES_SETTINGS="D:\mb-agent\settings.json"  # don't touch the global pointer at all
+export HERMES_DESK=MBAgentDesk
+export HERMES_STREAM_PORT=18770 HERMES_BROKER_PORT=18771
+export HERMES_DRIVER_PORT=18772 HERMES_CDP_PORT=18773
+```
+
+What the code does to keep them apart:
+
+- **The pointer file is never silently rewritten.** `setup.py --home` refuses when
+  `settings.json` already points somewhere else; `--force` overwrites *after* backing it up.
+- **Ports are claimed with an identity check.** Services report `home` + `desk` on
+  `/health` and `/status`; a port whose owner reports a different identity is treated as
+  foreign and skipped, instead of being adopted ("it answered, so it must be mine").
+- **Environment survives the detach.** Services are spawned through WMI so they outlive the
+  agent, and WMI does *not* inherit your environment — so `svc.py` writes the isolation
+  variables into a `.cmd` wrapper that starts the process. Without that, an isolated install
+  silently falls back to the default home and ports.
+- **No legacy fallback once you've chosen a home.** With `HERMES_BROWSER_HOME` set,
+  `profiles/` and `vault/` resolve under it, never under a previous install's paths.
+- **The token exists before you need it.** `svc.py` generates it at startup, so reading
+  `token.txt` right after boot returns a value instead of an empty file.
+
+`MOONLIGHTING_NPX` pins the `npx` binary when the MCP client starts you with a clean `PATH`.
+
 ## Security model
 
 - **Passwords never enter the model context.** The user types into a masked popup; the

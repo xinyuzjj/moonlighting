@@ -157,6 +157,34 @@ python scripts/session.py stop --name a1
 a1   cdp=18764  stream=8766  driver=8898  UP  http://127.0.0.1:8766/ctl
 ```
 
+## 跑多套实例（隔离）
+
+默认值（`HermesDesk`、8765/8897/8899/18763、一个全局指针文件）是按"一台机器一套"设计的。
+机器上已经有东西在跑时，给第二套自己的身份——全是环境变量：
+
+```bash
+export HERMES_BROWSER_HOME="D:\mb-agent"          # 浏览器数据（profiles、vault、token）
+export HERMES_SETTINGS="D:\mb-agent\settings.json"  # 完全不碰全局指针
+export HERMES_DESK=MBAgentDesk
+export HERMES_STREAM_PORT=18770 HERMES_BROKER_PORT=18771
+export HERMES_DRIVER_PORT=18772 HERMES_CDP_PORT=18773
+```
+
+代码靠这几条把它们隔开：
+
+- **指针文件绝不静默改写。** `setup.py --home` 发现 `settings.json` 已指向别处会直接拒绝；
+  `--force` 会先备份再覆盖。
+- **认领端口要验身份。** 服务在 `/health`、`/status` 里报 `home` + `desk`；端口上的服务
+  报的是另一套身份，就当"别人的"跳过，而不是因为"它能回答所以是我的"就占下来。
+- **环境变量要穿过 detach。** 服务用 WMI 起（为了活过 agent 收尾），而 WMI 不继承调用者环境——
+  所以 `svc.py` 把隔离变量写进 `.cmd` 包装脚本再由它起进程。没这一步，隔离配置会静默丢失，
+  数据写回默认目录。
+- **选过 home 就不再回退旧路径。** 设了 `HERMES_BROWSER_HOME` 之后，`profiles/`、`vault/`
+  都在它下面解析，不会落到上一套安装的路径。
+- **token 在你需要之前就已生成。** `svc.py` 启动时就落盘，不会出现"启动完 cat 到空文件然后 401"。
+
+MCP 客户端用干净 `PATH` 启动时，用 `MOONLIGHTING_NPX` 指定 `npx` 的绝对路径。
+
 ## 安全模型
 
 - **密码不进模型上下文。** 用户在掩码弹窗里输入，代理用 Windows DPAPI 加密、绑定页面 origin、
