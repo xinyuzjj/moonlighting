@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 *.pyo
 _cmd_*.txt
+_run_*.cmd
 _hidden.vbs
 ports.json
 settings.json
