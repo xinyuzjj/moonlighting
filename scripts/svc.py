@@ -125,6 +125,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--status", action="store_true")
     ap.add_argument("--stop", action="store_true")
+    ap.add_argument("--no-open", action="store_true", help="不要自动打开预览窗口")
     a = ap.parse_args()
 
     if a.stop:
@@ -164,7 +165,15 @@ def main():
         print("  started:", ", ".join(
             f"{n}(wrapper pid {p})" for n, p in started),
               "  <- 真正监听的是上面 UP 那行的 pid")
-    print(f"  preview: http://127.0.0.1:{STREAM}/ctl   <- 启动后立刻在预览面板打开这个地址")
+    url = f"http://127.0.0.1:{STREAM}/ctl"
+    print(f"  preview: {url}")
+    if not a.no_open:
+        # 建好桌面就把画面开出来，别让人再去翻日志找地址
+        try:
+            import webbrowser
+            webbrowser.open(url)
+        except Exception:  # noqa: BLE001
+            pass
 
 
 def _ensure_token():
