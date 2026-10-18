@@ -4,6 +4,7 @@
 桌面里登录、操作、切换标签页，账号密码存进该桌面独立的凭据库，**永远不进模型上下文**。
 邮箱也能交给它——用它去各平台把号申请下来，验证码自己收、自己填。
 
+[![站点](https://img.shields.io/badge/%E5%AE%98%E7%BD%91-xinyuzjj.github.io%2Fmoonlighting-2ea043)](https://xinyuzjj.github.io/moonlighting/)
 [![PyPI](https://img.shields.io/pypi/v/moonlighting.svg)](https://pypi.org/project/moonlighting/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](#平台要求)
