@@ -19,6 +19,7 @@ Codex 用 TOML：
 协议：JSON-RPC 2.0 over stdio，一行一条。stdout 只写协议消息，日志走 stderr。
 """
 import argparse
+import collections
 import json
 import os
 import shutil
@@ -35,6 +36,28 @@ LOG = sys.stderr
 
 def log(*a):
     print("[mcp]", *a, file=LOG, flush=True)
+
+
+def _node_dirs(npx=None):
+    """node.exe 所在的目录。npx 只是个壳，没有 node 它自己都起不来（实测）。"""
+    dirs = []
+    for cand in (os.path.dirname(npx) if npx else "",
+                 os.path.dirname(shutil.which("node") or ""),
+                 os.environ.get("NVM_SYMLINK", ""),
+                 os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"), "nodejs"),
+                 os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "nodejs")):
+        if cand and os.path.exists(os.path.join(cand, "node.exe" if os.name == "nt" else "node")):
+            dirs.append(cand)
+    return dirs
+
+
+def _child_env(npx):
+    """把 node 目录补进子进程 PATH——MCP 客户端常给一个干净环境。"""
+    env = dict(os.environ)
+    dirs = _node_dirs(npx)
+    if dirs:
+        env["PATH"] = os.pathsep.join(dirs + [env.get("PATH", "")])
+    return env
 
 
 def _npx():
@@ -62,22 +85,34 @@ class Child:
     """把 @playwright/mcp 当子进程用，转发 tools/*。"""
 
     def __init__(self, cdp_endpoint, extra):
-        cmd = [_npx(), "-y", "@playwright/mcp@latest",
+        npx = _npx()
+        cmd = [npx, "-y", "@playwright/mcp@latest",
                "--cdp-endpoint", cdp_endpoint, "--snapshot-mode", "none",
                "--timeout-settle", "250"] + extra
+        self.err = collections.deque(maxlen=40)
         self.p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                  stderr=subprocess.DEVNULL, text=True, encoding="utf-8",
-                                  errors="replace", bufsize=1)
+                                  stderr=subprocess.PIPE, text=True, encoding="utf-8",
+                                  errors="replace", bufsize=1, env=_child_env(npx))
+        threading.Thread(target=self._drain_stderr, daemon=True).start()
         self.lock = threading.Lock()
         self.n = 0
         r = self._call("initialize", {"protocolVersion": PROTOCOL, "capabilities": {},
                                       "clientInfo": {"name": "hermes-mcp", "version": "1.0"}}, 60)
         if not r or "result" not in r:
-            raise SystemExit(f"playwright-mcp 初始化失败: {r}")
+            tail = "\n".join(self.err) or "（子进程没有输出 stderr）"
+            raise SystemExit(f"playwright-mcp 初始化失败: {r}\n--- stderr ---\n{tail}")
         self._notify("notifications/initialized", {})
         tools = self._call("tools/list", {}, 30)
         self.tools = (tools or {}).get("result", {}).get("tools", [])
         log(f"子进程提供 {len(self.tools)} 个工具")
+
+    def _drain_stderr(self):
+        # 不能丢：初始化失败时这几十行是唯一的线索
+        try:
+            for line in self.p.stderr:
+                self.err.append(line.rstrip())
+        except Exception:  # noqa: BLE001
+            pass
 
     def _send(self, obj):
         self.p.stdin.write(json.dumps(obj) + "\n")

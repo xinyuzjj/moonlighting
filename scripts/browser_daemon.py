@@ -19,6 +19,7 @@
 """
 import argparse
 import json
+import re
 import urllib.parse
 import urllib.request
 import subprocess
@@ -80,6 +81,18 @@ def mcp(method, params, timeout=120):
                 return None
             if m.get("id") == mid:
                 return m
+
+
+def _ref_by_name(name):
+    """按可访问名在最新快照里找 ref。空 target 直接透传会让 playwright-mcp
+    把 "" 当 CSS 选择器解析，报语法错——和"元素不存在"完全是两码事。"""
+    text = tool("browser_snapshot", {})
+    for line in text.splitlines():
+        if f'"{name}"' in line and "[ref=" in line:
+            m = re.search(r"\[ref=([a-z0-9]+)\]", line)
+            if m:
+                return m.group(1)
+    return ""
 
 
 def tool(name, args, timeout=120, _retry=True):
@@ -165,12 +178,21 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/snap":
                 text = tool("browser_snapshot", {})
             elif u.path == "/click":
-                text = tool("browser_click", {"target": q.get("target", ""),
-                                              "element": q.get("element", "")})
+                tgt, name = q.get("target", ""), q.get("element", "")
+                if not tgt and name:
+                    tgt = _ref_by_name(name)
+                    if not tgt:
+                        return self._out(f"### Error\nError: 元素不存在：{name}（页面已变？重新 /snap）")
+                text = tool("browser_click", {"target": tgt, "element": name})
             elif u.path == "/type":
-                text = tool("browser_type", {"target": q.get("target", ""),
+                tgt, name = q.get("target", ""), q.get("element", "")
+                if not tgt and name:
+                    tgt = _ref_by_name(name)
+                    if not tgt:
+                        return self._out(f"### Error\nError: 元素不存在：{name}（页面已变？重新 /snap）")
+                text = tool("browser_type", {"target": tgt,
                                              "text": q.get("text", ""),
-                                             "element": q.get("element", "")})
+                                             "element": name})
             elif u.path == "/goto":
                 text = tool("browser_navigate", {"url": q.get("url", "")})
                 sync_preview(q.get("url", ""))

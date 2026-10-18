@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.1.2 — 2026-10-18
+
+Fixes from a second test pass on 0.1.1.
+
+- **MCP failed to start under a clean `PATH`.** `_npx()` resolved the `npx` shim but never put
+  `node` on the child's `PATH`, so `npx` died with `'"node"' is not recognized` and the failure
+  surfaced as `初始化失败: None`. `node`'s directory (next to `npx`, `NVM_SYMLINK`,
+  `Program Files
+odejs`, …) is now prepended to the child environment.
+- **Child stderr was discarded.** Initialization failures printed `None` with no clue why.
+  stderr is now drained into a bounded buffer and printed with the error.
+- **`/click` and `/type` with an empty `target`** passed `""` straight to playwright-mcp, which
+  parsed it as a CSS selector and returned a syntax error. They now resolve the ref by accessible
+  name from a fresh snapshot and, if there is none, return `元素不存在：<name>`.
+- **`agent/run.py` truncated failures at 90 chars**, cutting error messages mid-word. Failures
+  print in full; successes stay truncated.
+- `agent/act.py` only re-locates a ref when the failure looks like a stale ref, not on
+  "element does not exist".
+
 ## 0.1.1 — 2026-10-18
 
 Fixes for every issue found while installing a second, isolated instance on a machine that

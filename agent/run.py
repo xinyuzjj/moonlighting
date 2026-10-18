@@ -66,8 +66,10 @@ def run(task, runs_dir=None, verbose=True, confirm=False):
         events.write(json.dumps(ev, ensure_ascii=False) + "\n")
         events.flush()
         if verbose:
-            print(f"  {ev['step']:>2} {ev['action']:<6} {'OK ' if ev['ok'] else 'FAIL'} "
-                  f"{ev['ms']:>5}ms  {str(ev.get('detail'))[:90]}")
+            d = str(ev.get("detail"))
+            # 失败时打全，成功时截断——90 字符正好把错误关键词切掉
+            print(f"  {ev['step']:>2} {ev['action']:<7} {'OK ' if ev['ok'] else 'FAIL'} "
+                  f"{ev['ms']:>5}ms  " + (d if not ev["ok"] else d[:80]))
 
     # 站点记忆：上次成功的序列还在不在
     start = task.get("start") or obs.page()["url"]

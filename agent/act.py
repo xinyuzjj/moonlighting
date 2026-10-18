@@ -34,7 +34,8 @@ def act(action, **kw):
             out = obs.call("/goto", url=kw["url"])
         elif action == "click":
             out = obs.call("/click", target=kw.get("ref", ""), element=kw.get("name", ""))
-            if _bad(out) and kw.get("name"):        # ref 过期 → 按名字重定位再点一次
+            if _bad(out) and kw.get("name") and "元素不存在" not in out:
+                # 只有 ref 过期才重定位；元素确实不存在时重试是白费一次快照
                 ref = _find_ref(kw["name"])
                 if ref:
                     out = obs.call("/click", target=ref, element=kw["name"])
