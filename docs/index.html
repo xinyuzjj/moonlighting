@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moonlighting · 把账号交给 AI agent 管理</title>
+<meta name="description" content="一个桌面 = 一个平台 = 一个账号。AI agent 在隐藏的 Windows 桌面里登录、操作、切换平台，密码永不进入模型上下文。">
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#121721; --panel2:#171d29; --line:#242c3a;
+    --fg:#e6edf3; --dim:#9aa7b8; --accent:#7aa2f7; --accent2:#9ece6a; --warn:#e0af68;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg);color:var(--fg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Roboto,sans-serif;
+    line-height:1.7;-webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:920px;margin:0 auto;padding:0 22px}
+  header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#101623 0%,#0b0e14 100%)}
+  .hero{padding:64px 0 48px}
+  .kicker{color:var(--accent);font-size:13px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:14px}
+  h1{font-size:42px;margin:0 0 16px;letter-spacing:-.5px}
+  .lede{font-size:18px;color:var(--dim);max-width:700px;margin:0}
+  .lede b{color:var(--fg)}
+  .btns{margin-top:28px;display:flex;gap:12px;flex-wrap:wrap}
+  .btn{display:inline-block;padding:10px 18px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);font-size:14px}
+  .btn:hover{border-color:var(--accent);text-decoration:none}
+  .btn.primary{background:var(--accent);color:#0b0e14;border-color:var(--accent);font-weight:600}
+  section{padding:52px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:24px;margin:0 0 8px}
+  .sub{color:var(--dim);margin:0 0 26px}
+  .grid{display:grid;gap:14px}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:760px){.g3,.g2{grid-template-columns:1fr}h1{font-size:32px}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+  .card h3{margin:0 0 8px;font-size:15px;color:var(--accent)}
+  .card p{margin:0;color:var(--dim);font-size:14px}
+  code,pre{font-family:"SF Mono",Consolas,"Cascadia Mono",monospace}
+  pre{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:16px;overflow:auto;font-size:13px;line-height:1.6}
+  pre .c{color:#5c6a7e}
+  code{background:var(--panel2);padding:2px 6px;border-radius:5px;font-size:13px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+  th{color:var(--dim);font-weight:500;font-size:13px}
+  .ok{color:var(--accent2)} .no{color:#f7768e} .part{color:var(--warn)}
+  .flow{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;font-size:13px;color:var(--dim);white-space:pre;overflow:auto}
+  .donate{text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:34px 20px}
+  .donate img{width:280px;max-width:80%;border-radius:12px;background:#fff;padding:8px}
+  .donate p{color:var(--dim);font-size:14px;margin:14px 0 0}
+  footer{padding:34px 0 60px;color:var(--dim);font-size:13px;text-align:center}
+  .tag{display:inline-block;font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:2px 10px;margin-right:6px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hero">
+    <div class="kicker">Windows · MCP · 本地运行</div>
+    <h1>Moonlighting</h1>
+    <p class="lede">
+      <b>你把号建好，AI agent 替你管。</b><br>
+      一个桌面 = 一个平台 = 一个账号。agent 在属于自己的隐藏 Windows 桌面里登录、操作、切换标签页，
+      账号密码存在该桌面独立的凭据库里，<b>永远不进模型上下文</b>。<br>
+      邮箱也可以交给它——用它去各平台把号申请下来，验证码自己收、自己填。
+    </p>
+    <div class="btns">
+      <a class="btn primary" href="https://github.com/xinyuzjj/moonlighting">GitHub 仓库</a>
+      <a class="btn" href="https://pypi.org/project/moonlighting/">pip install moonlighting</a>
+      <a class="btn" href="#donate">☕ 支持本项目</a>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>它解决什么</h2>
+    <p class="sub">让 agent 操作浏览器，通常死在三个地方。</p>
+    <div class="grid g3">
+      <div class="card">
+        <h3>找元素</h3>
+        <p>截图猜坐标，差 11px 就点空。这里读一次无障碍树，按 <code>[ref=e42]</code> 精确点击，还能按可访问名回退定位。</p>
+      </div>
+      <div class="card">
+        <h3>丢状态</h3>
+        <p>每次都是全新 profile，登录态归零。每个桌面一个持久 profile，关掉重开还是登录状态。</p>
+      </div>
+      <div class="card">
+        <h3>传密码</h3>
+        <p>把密码贴进 prompt。这里你在掩码窗里输入，DPAPI 加密存在本地，代理注入，模型只拿到长度。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>一个号一个桌面</h2>
+    <p class="sub">账号的边界就是桌面名：独立 profile、独立凭据库、独立端口，互不串味。</p>
+    <div class="flow">┌─ 你的桌面 ─────────────────────────────────┐
+│  Hermes / Claude / Codex / 任何 MCP 客户端   │
+└───────────────┬────────────────────────────┘
+                │ MCP (stdio)  或  本地 HTTP
+┌───────────────▼────────────────────────────┐
+│  隐藏桌面 "junjunni"                        │
+│  ┌──────────────────────────────────────┐   │
+│  │ 真实 Chrome / Edge + 持久化 profile    │   │
+│  │ 标签 0：邮箱      标签 1：平台后台      │   │
+│  └──────────────────────────────────────┘   │
+│  凭据代理（DPAPI · 绑定 origin · 有审计）    │
+└─────────────────────────────────────────────┘</div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card">
+        <h3>同一个浏览器，多个标签</h3>
+        <p>agent 用 <code>/tabs</code>、<code>/tab?i=1</code>、<code>/newtab?url=</code> 在邮箱和平台后台之间切换，
+        验证码在这个桌面内部就能取到，不需要跨机器。</p>
+      </div>
+      <div class="card">
+        <h3>账号台账</h3>
+        <p><code>accounts.py</code> 记下哪套桌面是哪个平台的哪个号、允许做哪些操作。
+        <b>只存元数据，不存密码。</b></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>三行跑起来</h2>
+    <p class="sub">Windows 10/11 · Python 3.10+ · Node 18+ · Chrome 或 Edge（系统自带 Edge 即可）</p>
+<pre><span class="c"># 安装</span>
+pip install moonlighting
+moonlighting-setup --home "D:\moonlighting"
+moonlighting
+
+<span class="c"># 打印出来的画面地址，直接在上面点也行</span>
+preview: http://127.0.0.1:8765/ctl
+
+<span class="c"># 接进任意 MCP 客户端：一行，无路径</span>
+{ "mcpServers": { "browser": { "command": "moonlighting-mcp" } } }</pre>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>现在能做什么</h2>
+    <p class="sub">绿色是实测通过的，黄色是零件齐了但还没串成流水线。</p>
+    <table>
+      <tr><th>能力</th><th>状态</th></tr>
+      <tr><td>一个桌面一个浏览器实例，多套并存互不干扰</td><td class="ok">可用</td></tr>
+      <tr><td>多标签开新页、按索引切换，快照跟随活动标签</td><td class="ok">可用</td></tr>
+      <tr><td>按无障碍树 ref 填表、点击、导航、滚动、下拉</td><td class="ok">可用</td></tr>
+      <tr><td>密码不进模型上下文，凭据按桌面隔离</td><td class="ok">可用</td></tr>
+      <tr><td>掉登录重开还在（持久 profile）</td><td class="ok">可用</td></tr>
+      <tr><td>实时画面，人可以直接接管</td><td class="ok">可用</td></tr>
+      <tr><td>账号台账（desktop → 平台 → 账号 → 权限）</td><td class="ok">可用</td></tr>
+      <tr><td>注册流水线（填表 → 收邮件 → 回填验证码）</td><td class="part">零件齐，未串成脚本</td></tr>
+      <tr><td>登录态体检（cookie 过期提醒）</td><td class="part">未做</td></tr>
+      <tr><td>人机验证 / 短信验证</td><td class="no">不绕，交给人</td></tr>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>安全模型</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h3>密码不进上下文</h3>
+        <p>掩码窗输入 → Windows DPAPI 加密 → 绑定 origin → 代理注入。工具只返回 <code>{ok, verified, id_len, pwd_len}</code>。</p>
+      </div>
+      <div class="card">
+        <h3>每次注入都有审计</h3>
+        <p>时间、动作、origin、handle、结果码写进 <code>audit.jsonl</code>，从不记录明文。</p>
+      </div>
+      <div class="card">
+        <h3>危险动作要人确认</h3>
+        <p><code>ask_user</code> 不带 <code>--yes</code> 一律阻塞；<code>forbid</code> 硬拦越界动作。</p>
+      </div>
+      <div class="card">
+        <h3>不绕人机识别</h3>
+        <p>驱动的是真实浏览器，不改指纹、不打码、不硬闯风控。遇到验证码就停下来交给你。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="donate">
+  <div class="wrap">
+    <div class="donate">
+      <h2 style="margin-bottom:18px">☕ 支持本项目</h2>
+      <p style="color:var(--dim);margin:0 auto 22px;max-width:560px">
+        Moonlighting 免费、无广告、不收集任何数据。<br>
+        如果它帮你省下了来回登录、切换平台、复制验证码的功夫，可以请作者喝杯咖啡 ——
+        <b style="color:var(--fg)">完全自愿，不打赏也照样用、照样更新。</b>
+      </p>
+      <img src="reward.png" alt="峻峻尼 的赞赏码">
+      <p>微信扫码即可 · 完全自愿 · 感谢每一位使用者</p>
+    </div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <span class="tag">MIT</span><span class="tag">Windows</span><span class="tag">MCP</span><span class="tag">Python</span>
+  <p style="margin-top:14px">
+    基于 <a href="https://github.com/microsoft/playwright-mcp">@playwright/mcp</a>（Apache-2.0）·
+    <a href="https://github.com/xinyuzjj/moonlighting">GitHub</a> ·
+    <a href="https://pypi.org/project/moonlighting/">PyPI</a>
+  </p>
+</footer>
+
+</body>
+</html>

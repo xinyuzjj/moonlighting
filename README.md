@@ -1,7 +1,8 @@
 # Moonlighting
 
-**给 AI agent 一双看不见的手。** 在它自己的隐藏 Windows 桌面上跑一个真实浏览器，
-按无障碍树的 `[ref]` 操作元素而不是算坐标——密码永远不进模型上下文。
+**你把号建好，AI agent 替你管。** 一个桌面 = 一个平台 = 一个账号：agent 在属于自己的隐藏 Windows
+桌面里登录、操作、切换标签页，账号密码存进该桌面独立的凭据库，**永远不进模型上下文**。
+邮箱也能交给它——用它去各平台把号申请下来，验证码自己收、自己填。
 
 [![PyPI](https://img.shields.io/pypi/v/moonlighting.svg)](https://pypi.org/project/moonlighting/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -222,6 +223,18 @@ docs/SKILL.md        长篇实战手册：每个坑都带实测数字
 - [browserbase/stagehand](https://github.com/browserbase/stagehand) — `observe()` 返回真实选择器而不是像素。这正是本项目坚持用 ref 定位、绝不用坐标的原因。
 - [browser-use/browser-use](https://github.com/browser-use/browser-use) — agent 循环的形态：快照、动作、校验。
 - [web-infra-dev/midscene](https://github.com/web-infra-dev/midscene) — 纯 canvas 界面的视觉兜底思路（刻意不默认开启，因为慢）。
+
+## 支持本项目
+
+Moonlighting 免费、无广告、不收集任何数据，也不会因为没打赏就少更新一次。
+
+如果它帮你省下了来回登录、切换平台、复制验证码的功夫，可以请作者喝杯咖啡 👇
+
+<p align="center">
+  <img src="docs/reward.png" width="300" alt="峻峻尼 的赞赏码">
+</p>
+
+<p align="center"><sub>微信扫码即可 · 完全自愿 · 感谢每一位使用者</sub></p>
 
 ## 许可证
 

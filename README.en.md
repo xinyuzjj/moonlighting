@@ -1,7 +1,9 @@
 # Moonlighting
 
-**Invisible hands for your AI agent.** (The primary README is [Chinese](README.md).) A real Chrome, on its own hidden Windows desktop,
-driven by element references instead of coordinates — with credentials that never reach
+**You create the account; the agent runs it.** One desktop = one platform = one account: the
+agent logs in, works and switches tabs inside its own hidden Windows desktop, with credentials
+kept in that desktop's own vault and **never in the model's context**. Hand it a mailbox and it
+can sign you up for new platforms too — reading the verification code itself.
 the model.
 
 **English** · [中文](README.md)
