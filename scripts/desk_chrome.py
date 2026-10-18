@@ -12,6 +12,7 @@ import ctypes
 import ctypes.wintypes as w
 import json
 import os
+import shutil
 import subprocess
 import time
 
@@ -20,7 +21,62 @@ try:
     BASE = _ports.profiles()
 except Exception:  # noqa: BLE001
     BASE = os.environ.get("HERMES_PROFILES") or ('D:\\Hermes浏览器' if os.path.isdir('D:\\Hermes浏览器') else os.path.join(os.path.join(os.environ.get("LOCALAPPDATA") or os.path.expanduser("~"), "hermes-browser"), "profiles"))
-CHROME = os.environ.get("HERMES_CHROME") or next((p for p in (r"C:\Program Files\Google\Chrome\Application\chrome.exe", r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe", os.path.join(os.environ.get("LOCALAPPDATA", ""), "Google", "Chrome", "Application", "chrome.exe"), "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "/usr/bin/google-chrome", "/usr/bin/chromium") if os.path.exists(p)), "chrome")
+def _find_browser():
+    """找可用的 Chromium 系浏览器。
+
+    别人的机器上不一定装了 Chrome；Windows 自带 Edge，同样是 Chromium，CDP 一样能用。
+    顺序：HERMES_CHROME → 注册表 App Paths → 常见安装路径 → PATH。
+    """
+    env = os.environ.get("HERMES_CHROME")
+    if env:
+        if os.path.exists(env):
+            return env
+        raise SystemExit(f"HERMES_CHROME 指向的文件不存在: {env}")
+
+    if os.name == "nt":
+        try:
+            import winreg
+            for exe in ("chrome.exe", "msedge.exe"):
+                for hive in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+                    for view in (winreg.KEY_READ | winreg.KEY_WOW64_64KEY,
+                                 winreg.KEY_READ | winreg.KEY_WOW64_32KEY):
+                        try:
+                            k = winreg.OpenKey(hive, rf"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{exe}", 0, view)
+                            p = winreg.QueryValue(k, None).strip('"')
+                            winreg.CloseKey(k)
+                            if os.path.exists(p):
+                                return p
+                        except OSError:
+                            pass
+        except Exception:  # noqa: BLE001
+            pass
+
+    pf = os.environ.get("ProgramFiles", r"C:\Program Files")
+    pf86 = os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")
+    la = os.environ.get("LOCALAPPDATA", "")
+    cands = [
+        os.path.join(pf, r"Google\Chrome\Application\chrome.exe"),
+        os.path.join(pf86, r"Google\Chrome\Application\chrome.exe"),
+        os.path.join(la, r"Google\Chrome\Application\chrome.exe"),
+        os.path.join(pf86, r"Microsoft\Edge\Application\msedge.exe"),
+        os.path.join(pf, r"Microsoft\Edge\Application\msedge.exe"),
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+        "/usr/bin/google-chrome", "/usr/bin/chromium", "/usr/bin/microsoft-edge",
+    ]
+    for p in cands:
+        if p and os.path.exists(p):
+            return p
+    for name in ("chrome", "msedge", "chromium", "microsoft-edge"):
+        found = shutil.which(name)
+        if found:
+            return found
+    raise SystemExit(
+        "没找到 Chrome 或 Edge。装一个（Edge 在 Windows 上本来就有），"
+        "或设 HERMES_CHROME 指向 chrome.exe / msedge.exe 的绝对路径。")
+
+
+CHROME = _find_browser()
 GENERIC_ALL = 0x10000000
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)

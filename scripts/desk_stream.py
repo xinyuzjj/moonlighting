@@ -623,14 +623,16 @@ if __name__ == "__main__":
     if args.spawn:
         cmd = args.spawn
         if cmd.startswith("http"):
-            # Chrome 路径自动探测（Windows/macOS/Linux），可用 HERMES_CHROME 覆盖
-            chrome = os.environ.get("HERMES_CHROME") or next(
-                (p for p in (
-                    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-                    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-                    os.path.join(os.environ.get("LOCALAPPDATA", ""), "Google", "Chrome", "Application", "chrome.exe"),
-                    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-                    "/usr/bin/google-chrome", "/usr/bin/chromium") if os.path.exists(p)), "chrome")
+            # 浏览器路径自动探测，可用 HERMES_CHROME 覆盖；没有 Chrome 时退回 Edge
+            try:
+                from desk_chrome import _find_browser
+                chrome = _find_browser()
+            except Exception:  # noqa: BLE001
+                chrome = os.environ.get("HERMES_CHROME") or next(
+                    (p for p in (
+                        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+                        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+                        "/usr/bin/google-chrome", "/usr/bin/chromium") if os.path.exists(p)), "chrome")
             cmd = (f'"{chrome}" '
                    r'--no-first-run --no-default-browser-check --disable-gpu '
                    f'--window-size=1200,800 --window-position=0,0 "{cmd}"')

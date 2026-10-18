@@ -39,7 +39,7 @@ Driving a browser as an agent usually goes wrong in three places:
 
 ## Install
 
-Requires Windows 10/11, Python 3.10+, Node 18+ (for the Playwright MCP child), Chrome.
+Requires Windows 10/11, Python 3.10+, Node 18+, and any Chromium-based browser — Chrome **or Edge** (Edge ships with Windows, so a fresh machine already works). The launcher looks in `HERMES_CHROME`, then the registry's `App Paths`, then the usual install locations, then `PATH`; it fails with a readable message instead of a traceback.
 
 ### Option A — pip (no paths to edit)
 

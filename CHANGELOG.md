@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.3 — 2026-10-18
+
+- **Works without Chrome.** The launcher hard-coded three Chrome paths and then fell back to
+  `"chrome"` on `PATH`, so a machine without Chrome died with a `FileNotFoundError`. It now
+  resolves `HERMES_CHROME` → registry `App Paths` (chrome.exe, msedge.exe) → common install
+  locations → `PATH`, and Edge counts: verified end-to-end on Edge 148 (CDP, snapshot 408ms,
+  two isolated instances on separate user-data-dirs).
+- `desk_stream --spawn` uses the same resolver instead of its own shorter list.
+
 ## 0.1.2 — 2026-10-18
 
 Fixes from a second test pass on 0.1.1.

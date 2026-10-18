@@ -38,7 +38,7 @@
 
 ## 安装
 
-需要 Windows 10/11、Python 3.10+、Node 18+（Playwright MCP 子进程要用）、Chrome。
+需要 Windows 10/11、Python 3.10+、Node 18+，以及任意 Chromium 系浏览器——Chrome **或 Edge**（Windows 自带 Edge，所以干净的机器直接能用）。查找顺序：`HERMES_CHROME` → 注册表 `App Paths` → 常见安装路径 → `PATH`；都没有时报一句看得懂的话，而不是抛 traceback。
 
 ### 方式 A —— pip 安装（不用改任何路径）
 
