@@ -1,0 +1,22 @@
+{
+  "id": "guard-demo",
+  "goal": "验证四件事：forbid 拦截、ask_user 阻塞、scroll 生效、done_when 独立判定",
+  "start": "https://developer.mozilla.org/en-US/docs/Web/HTTP",
+  "max_steps": 10,
+  "actions_allow": ["goto", "scroll", "read", "assert", "ask_user"],
+  "forbid": ["click"],
+  "done_when": [{ "type": "eval", "js": "document.title", "op": "contains", "expect": "HTTP" }],
+  "steps": [
+    {
+      "do": { "action": "goto", "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP" },
+      "check": [{ "type": "eval", "js": "document.title", "op": "contains", "expect": "HTTP" }]
+    },
+    {
+      "do": { "action": "scroll", "direction": "down", "times": 1 },
+      "check": [{ "type": "eval", "js": "window.scrollY", "op": ">=", "expect": 200 }]
+    },
+    {
+      "do": { "action": "ask_user", "question": "要提交登录表单吗？" }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "id": "fail-recover-demo",
+  "goal": "故意让第 2 步失败：验证重试 3 次、失败截图、回滚到上一步的 milestone",
+  "start": "https://github.com/login",
+  "max_steps": 12,
+  "steps": [
+    {
+      "do": { "action": "goto", "url": "https://github.com/login" },
+      "check": [{ "type": "text", "value": "Sign in", "state": "visible" }]
+    },
+    {
+      "do": { "action": "type", "name": "Username or email address", "text": "probe@example.com" },
+      "check": [{ "type": "eval", "js": "document.querySelector('#login_field').value", "op": "==", "expect": "probe@example.com" }]
+    },
+    {
+      "do": { "action": "click", "name": "DefinitelyNotAButton" },
+      "check": [{ "type": "url", "op": "~=", "value": "/this-will-never-match$" }]
+    }
+  ]
+}

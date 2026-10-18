@@ -1,0 +1,16 @@
+{
+  "id": "github-login-replay",
+  "goal": "只做能重新定位的动作，用来验证站点记忆回放",
+  "start": "https://github.com/login",
+  "max_steps": 6,
+  "steps": [
+    {
+      "do": { "action": "type", "name": "Username or email address", "text": "probe@example.com" },
+      "check": [{ "type": "eval", "js": "document.querySelector('#login_field').value", "op": "==", "expect": "probe@example.com" }]
+    },
+    {
+      "do": { "action": "type", "name": "Password", "text": "not-a-real-password" },
+      "check": [{ "type": "eval", "js": "document.querySelector('#password').value.length", "op": ">=", "expect": 18 }]
+    }
+  ]
+}

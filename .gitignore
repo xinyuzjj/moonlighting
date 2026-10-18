@@ -28,3 +28,8 @@ Thumbs.db
 dist/
 build/
 *.egg-info/
+
+# agent loop artifacts
+agent/__pycache__/
+runs/
+mem/

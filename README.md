@@ -229,6 +229,28 @@ Windows only, by design: private desktops (`CreateDesktopW`), DPAPI, and silent 
 launch are Win32 primitives. The browser-control layer itself is portable — porting means
 replacing `private_desktop.py` and the DPAPI calls.
 
+## Agent loop (experimental, `agent/`)
+
+`scripts/` is the hands; `agent/` is a thin closed loop on top of it — not packaged in the
+wheel, run it from a clone.
+
+```bash
+cd moonlighting/agent
+python run.py ../tasks/github-login-replay.json     # steps + assertions + retries + events.jsonl
+```
+
+| file | what it does |
+|---|---|
+| `obs.py` | `/snap` → compressed to ≤6 KB (actionable nodes only), `shot()` for pixels |
+| `verify.py` | assertion DSL: `url` / `text` / `eval` / `count` |
+| `act.py` | 11 atomic actions, hard allow-list |
+| `run.py` | per-step retries, milestone rollback, `forbid` / `ask_user` / `done_when` |
+| `mem.py` | site memory: host+path → successful action sequence |
+
+Measured: 42 KB snapshot → 6.0 KB (-86%), empty click caught 10/10, failed step retries 3×
+then screenshots and rolls back. There is **no planner** yet: a task is an explicit step list.
+
+
 ## Acknowledgements
 
 Standing on these projects:

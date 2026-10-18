@@ -1,0 +1,34 @@
+{
+  "id": "github-login-fields",
+  "goal": "在 GitHub 登录页把账号和密码填进各自的框，不提交；再验证一次空点击能被断言抓到",
+  "start": "https://github.com/login",
+  "max_steps": 8,
+  "steps": [
+    {
+      "do": { "action": "goto", "url": "https://github.com/login" },
+      "check": [
+        { "type": "url", "op": "~=", "value": "github\\.com/login" },
+        { "type": "text", "value": "Sign in", "state": "visible" }
+      ]
+    },
+    {
+      "do": { "action": "type", "name": "Username or email address", "text": "probe@example.com" },
+      "check": [
+        { "type": "eval", "js": "document.querySelector('#login_field').value", "op": "==", "expect": "probe@example.com" }
+      ]
+    },
+    {
+      "do": { "action": "type", "name": "Password", "text": "not-a-real-password" },
+      "check": [
+        { "type": "eval", "js": "document.querySelector('#password').value.length", "op": ">=", "expect": 18 }
+      ]
+    },
+    {
+      "do": { "action": "click", "name": "NoSuchButtonXYZ" },
+      "expect_fail": true,
+      "check": [
+        { "type": "url", "op": "~=", "value": "/session$" }
+      ]
+    }
+  ]
+}

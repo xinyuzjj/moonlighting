@@ -221,6 +221,27 @@ docs/SKILL.md        长篇实战手册：我们踩过的每个坑，都带实�
 只支持 Windows，这是设计选择：私有桌面（`CreateDesktopW`）、DPAPI、静默启动都是 Win32 原语。
 浏览器控制这一层本身是可移植的——移植等于重写 `private_desktop.py` 和 DPAPI 那几处。
 
+## Agent 闭环（实验，`agent/`）
+
+`scripts/` 是手，`agent/` 是套在手上的闭环——**不在 wheel 里**，从 clone 里跑。
+
+```bash
+cd moonlighting/agent
+python run.py ../tasks/github-login-replay.json     # 步骤 + 断言 + 重试 + events.jsonl
+```
+
+| 文件 | 作用 |
+|---|---|
+| `obs.py` | `/snap` → 压到 ≤6KB（只留可操作节点），`shot()` 抓像素 |
+| `verify.py` | 断言 DSL：`url` / `text` / `eval` / `count` |
+| `act.py` | 11 个原子动作，硬白名单 |
+| `run.py` | 每步重试、milestone 回滚、`forbid` / `ask_user` / `done_when` |
+| `mem.py` | 站点记忆：host+path → 成功动作序列 |
+
+实测：42KB 快照 → 6.0KB（-86%）、空点击 10/10 检出、失败步重试 3 次后截图并回滚。
+**还没有 planner**：任务是显式步骤列表。
+
+
 ## 鸣谢
 
 站在这些项目上：
